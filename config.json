@@ -1,0 +1,24 @@
+{
+  "batch_size": 5,
+  "model_name": "gemini-2.5-flash-preview-05-20",
+  "max_retries": 10,
+  "retry_delay_seconds": 2,
+  "min_highlight_duration_seconds": 5,
+  "username": "i have no enemies",
+  "temperature": 0,
+  "use_caching": true,
+  "cache_ttl_seconds": 3600,
+  "game_type": "kills",
+  "max_zero_highlight_retries": 3,
+  "make_short": true,
+  "shorts": {
+    "no_webcam": false,
+    "add_subtitles": true
+  },
+  "folder_watcher": {
+    "watch_directory": "E:\\Game Recordings\\Counter-strike 2",
+    "polling_interval_seconds": 2,
+    "process_immediately": true,
+    "reprocess_analyzed_videos": false
+  }
+}

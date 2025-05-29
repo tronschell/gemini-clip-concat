@@ -1,0 +1,14 @@
+[project]
+name = "gemini-clip-concat"
+version = "0.1.0"
+description = "AI-powered gameplay video analysis tool for extracting and compiling kill highlights using Google Gemini"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "google-generativeai>=0.8.0",
+    "python-dotenv>=1.0.0",
+    "watchdog>=4.0.0",
+    "pathlib>=1.0.0",
+    "click>=8.1.0",
+    "rich>=13.7.0",
+]

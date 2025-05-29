@@ -1,0 +1,12 @@
+google-genai>=1.17.0
+langchain-google-genai>=2.0.0
+python-dotenv>=1.0.0
+watchdog>=4.0.0
+click>=8.1.0
+rich>=13.7.0
+nemo_toolkit[asr]>=1.22.0
+torch>=2.0.0
+moviepy>=2.0.0
+psutil>=5.9.0
+browser-use>=0.1.0
+playwright>=1.40.0 
