@@ -153,9 +153,13 @@ class YouTubeUploadAgent:
                d. Wait for upload to start and show progress
                e. While uploading, fill in video details:
                   - Title: Use the filename without extension as title
-                  - Description: Add a basic description mentioning it's uploaded via automation
-                  - Visibility: Set to 'Unlisted' (safer default)
-                  - Thumbnail: Use auto-generated or upload custom if desired
+                  - Visibility: For first video, set to 'Public'. For subsequent videos, schedule them:
+                    • Video 2+: Schedule 2 hours apart, rounded to next hour
+                    • Example: If uploading at 15:45, schedule as:
+                      - First video: Public (immediate)
+                      - Second video: Scheduled for 18:00
+                      - Third video: Scheduled for 20:00
+                      And so on...
                f. Click 'Publish' when ready
                g. Wait for processing to complete before starting next video
             
@@ -236,7 +240,7 @@ class YouTubeUploadAgent:
             Navigate to YouTube Studio (https://studio.youtube.com) and help the user log in:
             1. Go to https://studio.youtube.com
             2. If not logged in, click on 'Sign in' 
-            3. Wait for user to complete the login process manually
+            3. Wait for user to complete the login process manually, do not fill in any fields or click anything until the user logs in
             4. Once logged in and you can see the YouTube Studio dashboard, confirm login success
             5. The browser session will be saved for future use
             """

@@ -16,3 +16,5 @@ wheels/
 
 /exported_videos
 /exported_metadata
+
+.env
