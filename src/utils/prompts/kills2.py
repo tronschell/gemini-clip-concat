@@ -24,7 +24,6 @@ Identify every individual instance where the **exact text of `${username}`** app
 
 **MANDATORY VERIFICATION PROCESS (MUST BE COMPLETED FOR EVERY POTENTIAL CLIP):**
 Before you identify a timestamp as a `kill_notification_popup_time`, you **MUST** internally perform and pass ALL the following verification steps for each potential event. Failure at any step means the event is **IMMEDIATELY DISCARDED**.
-For your internal thinking only output a MAXIMUM of 5 words per thinking step.
 
 1.  **Kill Feed Presence & Activity Check:** At the potential timestamp, is there a visible kill feed displaying notifications within the specified crop region?
     *   If NO kill feed notifications are visible at all → **DISCARD** this potential event.

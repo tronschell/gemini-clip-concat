@@ -24,13 +24,16 @@ class GameProcessMonitor:
         'league of legends.exe': 'league_of_legends',
     }
     
-    def __init__(self, config: Config, check_interval: float = 5.0):
+    def __init__(self, config: Config, check_interval: float = 5.0, 
+                 on_game_start=None, on_game_stop=None):
         """
         Initialize the process monitor.
         
         Args:
             config: Configuration instance to update
             check_interval: How often to check for processes (seconds)
+            on_game_start: Optional callback for when a game starts (process_name, game_type)
+            on_game_stop: Optional callback for when a game stops (process_name)
         """
         self.config = config
         self.check_interval = check_interval
@@ -39,6 +42,10 @@ class GameProcessMonitor:
         self.monitoring = False
         self.monitor_thread: Optional[Thread] = None
         self.stop_event = Event()
+        
+        # Store optional callbacks
+        self.on_game_start = on_game_start
+        self.on_game_stop = on_game_stop
         
     def get_running_game_processes(self) -> Dict[str, str]:
         """
@@ -126,11 +133,25 @@ class GameProcessMonitor:
                 for process in new_processes:
                     game_type = running_games[process]
                     logger.info(f"🎮 Game process detected: {process} → using '{game_type}' config")
+                    
+                    # Call game start callback if provided
+                    if self.on_game_start:
+                        try:
+                            self.on_game_start(process, game_type)
+                        except Exception as e:
+                            logger.error(f"Error in game start callback for {process}: {str(e)}")
                 
                 # Log processes that stopped
                 stopped_processes = self.detected_processes - current_processes
                 for process in stopped_processes:
                     logger.info(f"🎮 Game process stopped: {process}")
+                    
+                    # Call game stop callback if provided
+                    if self.on_game_stop:
+                        try:
+                            self.on_game_stop(process)
+                        except Exception as e:
+                            logger.error(f"Error in game stop callback for {process}: {str(e)}")
                 
                 self.detected_processes = current_processes
                 

@@ -171,7 +171,7 @@ async def analyze_videos_batch(video_paths: List[str], output_file: str = "expor
 
     return results
 
-async def analyze_video(video_path: str, output_file: str = "exported_metadata/highlights.json", prompt_template=None) -> Tuple[List[Dict[str, Any]], Dict[str, Any]]:
+async def analyze_video(video_path: str, output_file: str = "exported_metadata/highlights.json", prompt_template=None, game_type: Optional[str] = None, temperature: Optional[float] = None) -> Tuple[List[Dict[str, Any]], Dict[str, Any]]:
     """
     Analyze a video file using Gemini and append results to JSON file
 
@@ -179,9 +179,14 @@ async def analyze_video(video_path: str, output_file: str = "exported_metadata/h
         video_path: Path to the video file to analyze
         output_file: Path to the JSON file where highlights will be saved
         prompt_template: Template string for the analysis prompt
+        game_type: Optional game type to override config setting
+        temperature: Optional temperature to override config setting
     """
     config = Config()
     model_name = config.model_name
+    
+    # Use provided temperature or fall back to config
+    effective_temperature = temperature if temperature is not None else config.temperature
 
     try:
         # Validate video file
@@ -192,7 +197,9 @@ async def analyze_video(video_path: str, output_file: str = "exported_metadata/h
         if not video_path.lower().endswith('.mp4'):
             raise ValueError(f"File must be in MP4 format for best compatibility with Gemini")
 
-        logger.info(f"Analyzing video: {os.path.basename(video_path)} with model: {model_name}")
+        # Use provided game_type or fall back to config
+        effective_game_type = game_type or config.game_type
+        logger.info(f"Analyzing video: {os.path.basename(video_path)} with model: {model_name}, game type: {effective_game_type}, temperature: {effective_temperature}")
 
         # Initialize Gemini client
         dotenv.load_dotenv()
@@ -243,7 +250,7 @@ async def analyze_video(video_path: str, output_file: str = "exported_metadata/h
                     config_gen = GenerateContentConfig(
                         response_mime_type="application/json",
                         response_schema=highlight_schema,
-                        temperature=config.temperature,
+                        temperature=effective_temperature,
                         thinking_config=types.ThinkingConfig(thinking_budget=2048)
                     )
                     
@@ -257,9 +264,9 @@ async def analyze_video(video_path: str, output_file: str = "exported_metadata/h
                     else:
                         # Generate the prompt using the template
                         if prompt_template is None:
-                            # Use dynamic prompt based on configured game type
+                            # Use dynamic prompt based on effective game type
                             prompt = get_prompt(
-                                config.game_type,
+                                effective_game_type,
                                 config.min_highlight_duration_seconds,
                                 config.username
                             )
@@ -272,7 +279,7 @@ async def analyze_video(video_path: str, output_file: str = "exported_metadata/h
                         
                         # Create content parts using the uploaded file and prompt
                         contents = [video_file, prompt]
-                        logger.debug("Using standard prompt (caching disabled)")
+                        logger.debug(f"Using standard prompt (caching disabled) for game type: {effective_game_type}")
 
                     # Count tokens before generating content
                     token_count = await loop.run_in_executor(
@@ -310,7 +317,8 @@ async def analyze_video(video_path: str, output_file: str = "exported_metadata/h
                         config.model_name,
                         prompt_tokens or 0,
                         completion_tokens or 0,
-                        cached_tokens or 0
+                        cached_tokens or 0,
+                        use_thinking_mode=True  # We're using thinking mode with ThinkingConfig
                     )
             
                     logger.debug(f"Token usage - Input: {prompt_tokens}, Cached: {cached_tokens}, Output: {completion_tokens}, Total: {total_tokens}")
@@ -339,7 +347,7 @@ async def analyze_video(video_path: str, output_file: str = "exported_metadata/h
             if not isinstance(response_json, dict) or "highlights" not in response_json:
                 raise ValueError("Invalid response format from API")
 
-            # Process highlights with added model_name
+            # Process highlights with added model_name and game_type
             processed_highlights = []
             # Get current timestamp for all highlights from this analysis
             analysis_timestamp = datetime.now().isoformat()
@@ -348,6 +356,7 @@ async def analyze_video(video_path: str, output_file: str = "exported_metadata/h
                 processed_highlight = {
                     "source_video": str(video_path),
                     "model_name": model_name,
+                    "game_type": effective_game_type,
                     "timestamp_start_seconds": highlight["timestamp_start_seconds"],
                     "timestamp_end_seconds": highlight["timestamp_end_seconds"],
                     "title": highlight["title"],
@@ -387,6 +396,7 @@ async def analyze_video(video_path: str, output_file: str = "exported_metadata/h
                 "video": video_path,
                 "status": "success",
                 "model_name": model_name,
+                "thinking_mode": True,  # We're using thinking mode with ThinkingConfig
                 "prompt_tokens": (prompt_tokens or 0) - (cached_tokens or 0),  # Only count non-cached tokens
                 "completion_tokens": completion_tokens or 0,
                 "total_tokens": (total_tokens or 0) - (cached_tokens or 0),  # Adjust total for cached tokens

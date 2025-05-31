@@ -153,4 +153,18 @@ class Config:
         return self._config.get("shorts", {
             "no_webcam": False,
             "add_subtitles": False
-        }) 
+        })
+    
+    @property
+    def queue_when_gaming(self) -> bool:
+        """
+        Whether to queue video processing when a game is running.
+        
+        When enabled, videos will be queued instead of processed immediately
+        if a game process is detected. Queued videos are processed in LIFO
+        order when the game closes.
+        
+        Returns:
+            True if videos should be queued during gaming, False otherwise
+        """
+        return self._config.get("queue_when_gaming", False) 

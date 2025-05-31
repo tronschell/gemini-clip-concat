@@ -291,6 +291,18 @@ class SubtitleGenerator:
     def create_gpu_subtitle_overlay(self, video_path: str, subtitle_data: Dict, output_path: str) -> bool:
         """Create subtitle overlay using GPU-accelerated FFmpeg processing."""
         try:
+            # Check if NVENC is available
+            if not self._check_nvenc_availability():
+                logger.warning("NVENC not available, falling back to CPU encoding")
+                ass_file = self._create_ass_subtitles(subtitle_data)
+                if not ass_file:
+                    return False
+                try:
+                    return self._fallback_cpu_encoding(video_path, ass_file, output_path)
+                finally:
+                    if os.path.exists(ass_file):
+                        os.unlink(ass_file)
+            
             # Create ASS subtitle file for better performance and styling
             ass_file = self._create_ass_subtitles(subtitle_data)
             if not ass_file:
@@ -306,42 +318,32 @@ class SubtitleGenerator:
                 fonts_dir = Path(__file__).parent.parent.parent / "fonts"
                 escaped_fonts_dir = self._escape_path_for_ffmpeg_filter(str(fonts_dir))
                 
-                # Use FFmpeg with full GPU acceleration pipeline
+                # Try GPU encoding with subtitle filter (CPU decode -> subtitle filter -> GPU encode)
                 cmd = [
                     'ffmpeg', '-y',
-                    # Hardware acceleration for input
-                    '-hwaccel', 'cuda',
-                    '-hwaccel_output_format', 'cuda',
                     '-i', video_path,
-                    # GPU-accelerated subtitle filter with properly escaped path and font directory
+                    # Subtitle filter (runs on CPU)
                     '-vf', f'subtitles={escaped_ass_path}:fontsdir={escaped_fonts_dir}',
                     # Hardware-accelerated encoding with NVENC
                     '-c:v', 'h264_nvenc',
-                    '-preset', 'p4',  # Balanced preset
-                    '-tune', 'hq',   # High quality
-                    '-rc', 'vbr',    # Variable bitrate
-                    '-cq', '23',     # Quality level
-                    '-b:v', '5M',    # Target bitrate
-                    '-maxrate', '8M', # Max bitrate
-                    '-bufsize', '10M', # Buffer size
-                    '-spatial_aq', '1',  # Spatial AQ
-                    '-temporal_aq', '1', # Temporal AQ
-                    '-rc-lookahead', '20', # Lookahead
-                    '-bf', '3',      # B-frames
-                    '-profile:v', 'high',
+                    '-preset', 'p4',  # Medium preset
+                    '-b:v', '5M',     # Target bitrate
                     # Audio copy (no re-encoding)
                     '-c:a', 'copy',
                     output_path
                 ]
                 
                 logger.info("Starting GPU-accelerated subtitle rendering...")
+                logger.debug(f"GPU encoding command: {' '.join(cmd)}")
                 result = subprocess.run(cmd, capture_output=True, text=True)
                 
                 if result.returncode == 0:
                     logger.info("✓ GPU-accelerated subtitle rendering completed successfully")
                     return True
                 else:
-                    logger.warning(f"NVENC encoding failed: {result.stderr}")
+                    logger.warning(f"NVENC encoding failed with return code {result.returncode}")
+                    logger.warning(f"STDERR: {result.stderr}")
+                    logger.warning(f"STDOUT: {result.stdout}")
                     # Fallback to CPU encoding
                     return self._fallback_cpu_encoding(video_path, ass_file, output_path)
                     
@@ -352,6 +354,28 @@ class SubtitleGenerator:
                     
         except Exception as e:
             logger.error(f"Error creating GPU subtitle overlay: {e}")
+            return False
+
+    def _check_nvenc_availability(self) -> bool:
+        """Check if NVENC is available on the system."""
+        try:
+            # Quick test to see if h264_nvenc encoder is available
+            cmd = ['ffmpeg', '-hide_banner', '-f', 'lavfi', '-i', 'testsrc=duration=1:size=320x240:rate=1', 
+                   '-t', '1', '-c:v', 'h264_nvenc', '-f', 'null', '-']
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=10)
+            
+            if result.returncode == 0:
+                logger.info("✓ NVENC is available")
+                return True
+            else:
+                logger.warning(f"NVENC test failed: {result.stderr}")
+                return False
+                
+        except subprocess.TimeoutExpired:
+            logger.warning("NVENC availability check timed out")
+            return False
+        except Exception as e:
+            logger.warning(f"Error checking NVENC availability: {e}")
             return False
 
     def _escape_path_for_ffmpeg_filter(self, path: str) -> str:
@@ -428,8 +452,8 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
             logger.info("Attempting CPU fallback encoding...")
             # Escape the ASS file path for FFmpeg filter
             escaped_ass_path = self._escape_path_for_ffmpeg_filter(ass_file)
-            logger.info(f"CPU fallback - Original ASS path: {ass_file}")
-            logger.info(f"CPU fallback - Escaped ASS path: {escaped_ass_path}")
+            logger.debug(f"CPU fallback - Original ASS path: {ass_file}")
+            logger.debug(f"CPU fallback - Escaped ASS path: {escaped_ass_path}")
             
             # Get font directory path for FFmpeg
             fonts_dir = Path(__file__).parent.parent.parent / "fonts"
@@ -446,13 +470,16 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
                 output_path
             ]
             
+            logger.debug(f"CPU encoding command: {' '.join(cmd)}")
             result = subprocess.run(cmd, capture_output=True, text=True)
             
             if result.returncode == 0:
                 logger.info("✓ CPU fallback encoding completed successfully")
                 return True
             else:
-                logger.error(f"CPU encoding also failed: {result.stderr}")
+                logger.error(f"CPU encoding also failed with return code {result.returncode}")
+                logger.error(f"STDERR: {result.stderr}")
+                logger.error(f"STDOUT: {result.stdout}")
                 return False
                 
         except Exception as e:

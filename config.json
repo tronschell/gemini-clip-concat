@@ -11,6 +11,7 @@
   "game_type": "kills",
   "max_zero_highlight_retries": 3,
   "make_short": true,
+  "queue_when_gaming": true,
   "shorts": {
     "no_webcam": false,
     "add_subtitles": true
