@@ -4,6 +4,7 @@ import tempfile
 import shutil
 import logging
 import datetime
+import glob
 from pathlib import Path
 from typing import Optional
 from .subtitle_generator import SubtitleGenerator
@@ -18,6 +19,21 @@ class ShortsCreator:
         self.shorts_dir = self.output_dir / "shorts"
         self.shorts_dir.mkdir(exist_ok=True)
         self.subtitle_generator = SubtitleGenerator()
+    
+    def _cleanup_subtitle_json_files(self):
+        """Remove all JSON subtitle files from the shorts directory."""
+        try:
+            json_files = glob.glob(str(self.shorts_dir / "*_subtitles.json"))
+            if json_files:
+                for json_file in json_files:
+                    if os.path.exists(json_file):
+                        os.unlink(json_file)
+                        logger.info(f"✓ Cleaned up subtitle JSON: {Path(json_file).name}")
+                logger.info(f"✓ Cleaned up {len(json_files)} subtitle JSON files")
+            else:
+                logger.debug("No subtitle JSON files found to clean up")
+        except Exception as e:
+            logger.warning(f"Error cleaning up subtitle JSON files: {e}")
     
     def create_short_from_compilation(self, video_path: str, no_webcam: bool = False, add_subtitles: bool = False) -> Optional[str]:
         """
@@ -227,6 +243,8 @@ class ShortsCreator:
                 logger.info(f"✓ Subtitle generation successful, removing original video: {video_path}")
                 # Remove original video
                 os.unlink(video_path)
+                # Clean up subtitle JSON files
+                self._cleanup_subtitle_json_files()
                 logger.info(f"✓ Subtitle video created: {final_video}")
                 return str(final_video)
             else:

@@ -9,11 +9,12 @@ from .the_finals import HIGHLIGHT_PROMPT as THE_FINALS_PROMPT
 from .league_of_legends import HIGHLIGHT_PROMPT as LOL_PROMPT
 from .custom import HIGHLIGHT_PROMPT as CUSTOM_PROMPT
 from .kills import HIGHLIGHT_PROMPT as KILLS_PROMPT
+from .splitgate2 import HIGHLIGHT_PROMPT as SPLITGATE2_PROMPT
 
 logger = logging.getLogger(__name__)
 
 # Define supported game types
-GameType = Literal["cs2", "overwatch2", "the_finals", "league_of_legends", "custom", "kills"]
+GameType = Literal["cs2", "overwatch2", "the_finals", "league_of_legends", "custom", "kills", "splitgate2"]
 
 # Mapping of game types to their prompt templates
 PROMPT_TEMPLATES: Dict[GameType, Template] = {
@@ -22,7 +23,8 @@ PROMPT_TEMPLATES: Dict[GameType, Template] = {
     "the_finals": THE_FINALS_PROMPT,
     "league_of_legends": LOL_PROMPT,
     "custom": CUSTOM_PROMPT,
-    "kills": KILLS_PROMPT
+    "kills": KILLS_PROMPT,
+    "splitgate2": SPLITGATE2_PROMPT
 }
 
 def get_prompt(game_type: GameType, min_highlight_duration_seconds: int, username: str) -> str:

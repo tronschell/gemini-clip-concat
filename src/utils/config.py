@@ -6,7 +6,7 @@ from typing import Dict, Any, Literal
 logger = logging.getLogger(__name__)
 
 # Define valid game types for typing
-GameType = Literal["cs2", "overwatch2", "the_finals", "league_of_legends", "custom", "kills"]
+GameType = Literal["cs2", "overwatch2", "the_finals", "league_of_legends", "custom", "kills", "splitgate2"]
 
 class Config:
     _instance = None

@@ -22,6 +22,7 @@ class GameProcessMonitor:
         'thefinals.exe': 'the_finals',
         'leagueoflegends.exe': 'league_of_legends',
         'league of legends.exe': 'league_of_legends',
+        'portalwars2client-win64-shipping.exe': 'splitgate2',  # Splitgate 2
     }
     
     def __init__(self, config: Config, check_interval: float = 5.0, 

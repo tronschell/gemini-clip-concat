@@ -8,6 +8,8 @@ This directory contains prompt templates for different games that can be used fo
 - `overwatch2.py` - Overwatch 2
 - `the_finals.py` - The Finals
 - `league_of_legends.py` - League of Legends
+- `splitgate2.py` - Splitgate 2
+- `kills.py` - Generic kill detection for FPS games
 - `custom.py` - General-purpose template for any game
 
 ## How to Use
@@ -18,6 +20,8 @@ This directory contains prompt templates for different games that can be used fo
    - `"overwatch2"` - Overwatch 2
    - `"the_finals"` - The Finals
    - `"league_of_legends"` - League of Legends
+   - `"splitgate2"` - Splitgate 2
+   - `"kills"` - Generic kill detection for FPS games
    - `"custom"` - General-purpose template
 
 Example:

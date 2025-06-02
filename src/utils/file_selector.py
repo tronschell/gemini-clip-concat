@@ -76,6 +76,7 @@ class FileSelector:
                 ("overwatch2", "Overwatch 2"),
                 ("the_finals", "The Finals"),
                 ("league_of_legends", "League of Legends"),
+                ("splitgate2", "Splitgate 2"),
                 ("kills", "Kill Feed Detection"),
                 ("custom", "Custom/General")
             ]
